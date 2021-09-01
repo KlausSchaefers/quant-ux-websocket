@@ -1,72 +1,37 @@
 import fs from 'fs'
 import Logger from './Logger'
 
+
 class Configuration {
 
-  jwtSecret: string = 'Test'
+  PORT = 8086;
 
-  jwtExpires: string=  '24h'
+  VERSION = '1.0.0'
 
-  dataPath: string  = './data'
+  QUANT_UX_SERVER = ''
 
-  mailServer: string  = ''
+  CLEANUP_INTERVAL_IN_MS = 30000
 
-  mailUser: string  = ''
-
-  mailPassword: string  = ''
-
-  mailDebug: boolean = false
-
-  logLevel: number = 1
-
-  logFile: string = ''
-
-  templateFolder: string = 'hosting'
-
+  LOG_LEVEL = 1
 
   constructor () {
     try {
       let content = fs.readFileSync('./config.json',  'utf8')
       let data = JSON.parse(content)
-
-      // jwt
-      if (data.jwtSecret) {
-        this.jwtSecret = data.jwtSecret
-      }
-      if (data.dataPath) {
-        this.dataPath = data.dataPath
-      }
-      if (data.jwtExpires) {
-        this.jwtExpires = data.jwtExpires
+      if (data.QUX_SERVER) {
+        this.QUANT_UX_SERVER = data.QUX_SERVER
       }
 
-      // mail
-      if (data.mailServer) {
-        this.mailServer = data.mailServer
-      }
-      if (data.mailUser) {
-        this.mailUser = data.mailUser
-      }
-      if (data.mailPassword) {
-        this.mailPassword = data.mailPassword
-      }
-      if (data.mailDebug !== undefined) {
-        this.mailDebug = data.mailDebug
+      if (data.PORT) {
+        this.PORT = data.PORT
       }
 
-      // log
-      if (data.logLevel !== undefined) {
-        this.logLevel = data.logLevel
-      }
-      if (data.logFile !== undefined) {
-        this.logFile = data.logFile
+      if (data.LOG_LEVEL) {
+        this.LOG_LEVEL = data.LOG_LEVEL
       }
 
-      if (data.templateFolder) {
-        this.templateFolder = data.templateFolder
-      }
     } catch (e) {
-      Logger.error('Configuration.constructor() > Cannot parse file')
+      Logger.error('Configuration.constructor() > Cannot parse file', e)
     }
   }
 

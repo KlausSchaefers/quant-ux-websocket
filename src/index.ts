@@ -1,46 +1,107 @@
 import * as WebSocket from "ws"
-import { createServer, ClientRequest } from 'http';
+import { createServer, Server } from 'http';
 import {URL} from 'url'
+import { v4 as uuidv4 } from 'uuid';
+import axios from 'axios';
 import Logger from './util/Logger'
+import Configuration from './util/Configuration'
 
 async function init() {
-  const PORT = 8086;
-  const VERSION = '1.0.0'
+
+  Logger.logLevel = Configuration.LOG_LEVEL
 
   const server = createServer();
+  const wss = createWSS()
+
+  initUpgrade(server, wss)
+  initCleanUp(wss)
+
+  server.listen(Configuration.PORT);
+
+  Logger.success(`***************************************************************************************************`);
+  Logger.success(`*                                                                                                 *`);
+  Logger.success(`* Quant-UX-WebSocket ${Configuration.VERSION} is running at https://localhost:${Configuration.PORT} *`);
+  Logger.success(`*                                                                                                 *`);
+  Logger.success(`***************************************************************************************************`);
+
+}
+
+function createWSS () : WebSocket.Server {
+  Logger.success('createWSS() > enter')
   const wss = new WebSocket.Server({ noServer: true });
 
-  wss.on('connection', (ws:any, appId: string, user: any) => {
-    console.debug('connection()', appId, user)
-    ws.appId = appId
-    ws.userId = user.id
-    ws.on('message', (msg:any) => {
-      console.log(`Received message ${msg} for `+ appId);
-      ws.send(`Ack ${msg}` );
-      /**
-       * Do something with the message? Add a unique time stamp? Can we get somehow a qunique id?
-       */
+  wss.on('close', () => {
+    Logger.warn('createWSS() > Close connection')
+  });
 
-      wss.clients.forEach((client:any) => {
-        console.debug(client.appId)
-        /**
-         * FIXME: Do not send to same client?
-         */
-        if (client.readyState === WebSocket.OPEN && client.appId === appId) {
-          client.send('Other ' + msg);
-        }
-      });
+  wss.on('connection', (ws:any, appId: string) => {
+    initClient(wss, ws, appId)
+  });
+
+  return wss
+}
+
+function initClient (wss:WebSocket.Server, ws: any, appId: string) {
+  Logger.log(2, 'initClient() > enter', appId)
+
+  /**
+   * Set here dome props on the clients to ensure
+   * we can forward to the right clients
+   */
+  let clientId = uuidv4()
+  ws.appId = appId
+  ws.clientId = clientId
+
+  /**
+   * Delegate messages to handleMessage
+   */
+  ws.on('message', (msg:any) => {
+    handleMessage(wss, ws, appId, clientId, msg)
+  });
+
+  /**
+   * Handle pongs for heart beat
+   */
+  ws.on('pong', () => ws.isAlive = true)
+}
+
+function handleMessage (wss:WebSocket.Server, ws: any, appId: string,clientId: string, msg: any) {
+  Logger.log(2, 'handleMessage() > enter')
+
+  try {
+    let now = new Date().getTime()
+
+    /**
+     * Set the server timestamp as a means of order,
+     * so clients can later order messages
+     */
+    let data = JSON.parse(msg)
+    data.ts = now
+
+
+    /**
+     * Acknowlegde the message with the server timestamp and the message id
+     */
+    ws.send(JSON.stringify({ts: now, id: data.id, type: 'ack'}));
+
+    /**
+     * Forward the message to all other clients that are registered for this app
+     */
+    let reply = JSON.stringify(data)
+    wss.clients.forEach((client:any) => {
+      if (client.readyState === WebSocket.OPEN && client.appId === appId && client.clientId !== clientId) {
+        client.send(reply);
+      }
     });
+  } catch (err) {
+    Logger.error('handleMessage() > Could not handle message ', msg)
+  }
 
-    ws.on('pong', () => ws.isAlive = true)
-  });
+}
 
-  wss.on('close', function close() {
-    console.log('disconnected');
-  });
-
-  server.on('upgrade', (request:any, socket:any, head) => {
-
+function initUpgrade(server: Server, wss:WebSocket.Server) {
+  Logger.success('initUpgrade() > enter')
+  server.on('upgrade', (request:any, socket:any, head: any) => {
     authenticate(request, (err:string, appId: string, user: any) => {
       if (err) {
         Logger.warn('Cannot autheicate request')
@@ -54,41 +115,48 @@ async function init() {
       });
     });
   });
+}
 
+function initCleanUp(wss:WebSocket.Server) {
+  Logger.success('initCleanUp() > enter')
   const interval = setInterval(() => {
     Logger.warn('Check Connections')
     wss.clients.forEach( (ws:any) => {
       if (ws.isAlive === false) {
-        Logger.warn('Kill connection')
+        Logger.warn('initCleanUp() > Kill connection')
         return ws.terminate();
       }
       ws.isAlive = false;
       ws.ping(() => {});
     });
-  }, 30000)
-
-  server.listen(PORT);
-
-
-
-  console.log(`Quant-UX-WebSocket ${VERSION} is running at https://localhost:${PORT}`);
-
+  }, Configuration.CLEANUP_INTERVAL_IN_MS)
 }
 
 function authenticate (request:any, callback:any) {
   let url = new URL(request.url, 'https://example.org/')
   let appId = url.searchParams.get('app')
   let jwt = url.searchParams.get('jwt')
-  console.debug('authenticate()', appId)
   if (!appId || !jwt) {
+    Logger.error('authenticate() > Wrong url', url)
     callback('URL not correct')
     return
   }
-  callback(null, appId, {email: 'klaus', id:'das'})
+  /**
+   * FIXME: This could be an extra endpoint... so this will take more time
+   */
+  let quxURl = `${Configuration.QUANT_UX_SERVER}rest/apps/${appId}.json?token=` + jwt
+  axios.get(quxURl)
+    .then((response) => {
+      Logger.log(2, 'authenticate() > Access granted ' + appId)
+      callback(null, appId)
+    })
+    .catch((error) => {
+      Logger.warn('authenticate() > User not allowed to access ' + appId)
+      callback('User not allowed' + error)
+    })
 }
 
-function heartbeat(ws:any) {
-
-}
-
+/**
+ * Start server
+ */
 init()

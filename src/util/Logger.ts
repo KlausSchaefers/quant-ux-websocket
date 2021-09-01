@@ -8,16 +8,24 @@ class Logger {
 
   log (level: number, msg: string, data: any = '', data2: any = '') {
     if (level < this.logLevel) {
-      console.debug(msg, data, data2)
+      console.debug(this.format(msg), data, data2)
     }
   }
 
+  success (msg: string, data: any = '', data2: any = '') {
+    console.debug(chalk.blueBright(this.format(msg), data, data2))
+  }
+
   error (msg: string, data: any = '', data2: any = '') {
-    console.debug(chalk.red(msg, data, data2))
+    console.debug(chalk.red(this.format(msg), data, data2))
   }
 
   warn (msg: string, data: any = '', data2: any = '') {
-    console.debug(chalk.yellow(msg, data, data2))
+    console.debug(chalk.yellow(this.format(msg), data, data2))
+  }
+
+  format(msg: string) {
+    return new Date().toISOString() + '     ' + msg
   }
 }
 
