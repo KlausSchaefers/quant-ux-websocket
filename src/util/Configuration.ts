@@ -10,7 +10,7 @@ class Configuration {
 
   QUANT_UX_SERVER = ''
 
-  CLEANUP_INTERVAL_IN_MS = 3000
+  CLEANUP_INTERVAL_IN_MS = 30000
 
   LOG_LEVEL = 1
 
