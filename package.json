@@ -1,11 +1,11 @@
 {
   "name": "quant-ux-websocket",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "The Quant-UX web socket server",
-  "main": "src/index.js",
+  "main": "src/qux-websocket-server.ts",
   "scripts": {
     "test": "jest",
-    "serve": "nodemon src/index.ts --ignore data",
+    "serve": "nodemon src/qux-websocket-server.ts --ignore data",
     "build": "tsc --project ./",
     "buildX": "tsc --project ./ && node sync.js",
     "clean:dist": "shx rm -rf ./dist"

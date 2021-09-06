@@ -51,6 +51,7 @@ function initClient (wss:WebSocket.Server, ws: any, appId: string) {
   let clientId = uuidv4()
   ws.appId = appId
   ws.clientId = clientId
+  ws.lastMessage = new Date().getTime()
 
   /**
    * Delegate messages to handleMessage
@@ -62,7 +63,7 @@ function initClient (wss:WebSocket.Server, ws: any, appId: string) {
   /**
    * Handle pongs for heart beat
    */
-  ws.on('pong', () => ws.isAlive = true)
+  ws.on('pong', () => ws.isAlive = true) // chekc if this really works
 }
 
 function handleMessage (wss:WebSocket.Server, ws: any, appId: string,clientId: string, msg: any) {
@@ -78,7 +79,6 @@ function handleMessage (wss:WebSocket.Server, ws: any, appId: string,clientId: s
     let data = JSON.parse(msg)
     data.ts = now
 
-
     /**
      * Acknowlegde the message with the server timestamp and the message id
      */
@@ -89,6 +89,7 @@ function handleMessage (wss:WebSocket.Server, ws: any, appId: string,clientId: s
      */
     let reply = JSON.stringify(data)
     wss.clients.forEach((client:any) => {
+      // makethis faster by having a dedicated array??? In this case we also need to clean up stuff
       if (client.readyState === WebSocket.OPEN && client.appId === appId && client.clientId !== clientId) {
         client.send(reply);
       }
@@ -120,7 +121,7 @@ function initUpgrade(server: Server, wss:WebSocket.Server) {
 function initCleanUp(wss:WebSocket.Server) {
   Logger.success('initCleanUp() > enter')
   const interval = setInterval(() => {
-    Logger.warn('Check Connections')
+    Logger.warn('Check Connections', wss.clients.values.length)
     wss.clients.forEach( (ws:any) => {
       if (ws.isAlive === false) {
         Logger.warn('initCleanUp() > Kill connection')

@@ -6,11 +6,11 @@ class Configuration {
 
   PORT = 8086;
 
-  VERSION = '1.0.0'
+  VERSION = '1.0.1'
 
   QUANT_UX_SERVER = ''
 
-  CLEANUP_INTERVAL_IN_MS = 30000
+  CLEANUP_INTERVAL_IN_MS = 3000
 
   LOG_LEVEL = 1
 
