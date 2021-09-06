@@ -121,10 +121,10 @@ function initUpgrade(server: Server, wss:WebSocket.Server) {
 function initCleanUp(wss:WebSocket.Server) {
   Logger.success('initCleanUp() > enter')
   const interval = setInterval(() => {
-    Logger.warn('Check Connections', wss.clients.values.length)
+    Logger.warn('Check Connections', wss.clients.size)
     wss.clients.forEach( (ws:any) => {
       if (ws.isAlive === false) {
-        Logger.warn('initCleanUp() > Kill connection')
+        Logger.warn('initCleanUp() > Kill connection', ws.appId)
         return ws.terminate();
       }
       ws.isAlive = false;
