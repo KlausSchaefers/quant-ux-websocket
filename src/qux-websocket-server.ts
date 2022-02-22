@@ -21,6 +21,7 @@ async function init() {
   Logger.success(`***************************************************************************************************`);
   Logger.success(`*                                                                                                 *`);
   Logger.success(`* Quant-UX-WebSocket ${Configuration.VERSION} is running at https://localhost:${Configuration.PORT} *`);
+  Logger.success(`* Backend ${Configuration.QUANT_UX_SERVER}                   *`);
   Logger.success(`*                                                                                                 *`);
   Logger.success(`***************************************************************************************************`);
 
@@ -147,11 +148,11 @@ function authenticate (request:any, callback:any) {
    */
   let quxURl = `${Configuration.QUANT_UX_SERVER}rest/apps/${appId}.json?token=` + jwt
   axios.get(quxURl)
-    .then((response) => {
+    .then((response:any) => {
       Logger.log(2, 'authenticate() > Access granted ' + appId)
       callback(null, appId)
     })
-    .catch((error) => {
+    .catch((error:any) => {
       Logger.warn('authenticate() > User not allowed to access ' + appId)
       callback('User not allowed' + error)
     })

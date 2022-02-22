@@ -22,8 +22,16 @@ class Configuration {
         this.QUANT_UX_SERVER = data.QUX_SERVER
       }
 
+      if (process.env.QUX_SERVER) {
+        this.QUANT_UX_SERVER = process.env.QUX_SERVER
+      }
+
       if (data.PORT) {
         this.PORT = data.PORT
+      }
+
+      if (process.env.QUX_SERVER_PORT) {
+        this.PORT = parseInt(process.env.QUX_SERVER_PORT)
       }
 
       if (data.LOG_LEVEL) {
