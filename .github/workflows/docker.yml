@@ -1,6 +1,7 @@
 name: Docker Image Build and Push to Dockerhub - CI/CD
 
 on: 
+  workflow_dispatch:
   push:
     branches: [ master ]
 
