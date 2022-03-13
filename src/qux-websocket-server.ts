@@ -16,11 +16,11 @@ async function init() {
   initUpgrade(server, wss)
   initCleanUp(wss)
 
-  server.listen(Configuration.PORT);
+  server.listen(Configuration.PORT)
 
   Logger.success(`***************************************************************************************************`);
   Logger.success(`*                                                                                                 *`);
-  Logger.success(`* Quant-UX-WebSocket ${Configuration.VERSION} is running at https://localhost:${Configuration.PORT} *`);
+  Logger.success(`* Quant-UX-WebSocket ${Configuration.VERSION} is running at wss://localhost:${Configuration.PORT} *`);
   Logger.success(`* Backend ${Configuration.QUANT_UX_SERVER}                   *`);
   Logger.success(`*                                                                                                 *`);
   Logger.success(`***************************************************************************************************`);
@@ -43,7 +43,7 @@ function createWSS () : WebSocket.Server {
 }
 
 function initClient (wss:WebSocket.Server, ws: any, appId: string) {
-  Logger.log(2, 'initClient() > enter', appId)
+  Logger.log(-2, 'initClient() > enter', appId)
 
   /**
    * Set here dome props on the clients to ensure
@@ -146,7 +146,7 @@ function authenticate (request:any, callback:any) {
   /**
    * FIXME: This could be an extra endpoint... so this will take more time
    */
-  let quxURl = `${Configuration.QUANT_UX_SERVER}rest/apps/${appId}.json?token=` + jwt
+  let quxURl = `${Configuration.QUANT_UX_SERVER}/rest/apps/${appId}.json?token=` + jwt
   axios.get(quxURl)
     .then((response:any) => {
       Logger.log(2, 'authenticate() > Access granted ' + appId)

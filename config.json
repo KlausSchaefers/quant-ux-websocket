@@ -1,5 +1,5 @@
 {
-  "QUX_SERVER": "https://quant-ux.com/",
+  "QUX_SERVER": "http://localhost:8081/",
   "PORT": 8086,
   "LOG_LEVEL": 2
 }
