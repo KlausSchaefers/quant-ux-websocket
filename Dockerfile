@@ -1,26 +1,31 @@
-FROM node:16-alpine
+FROM node:16-alpine AS builder
+USER node
+WORKDIR /home/node
 
-RUN apk --no-cache add git
-RUN apk --no-cache add bash
+COPY --chown=node:node ["package.json", "package-lock.json", "tsconfig.json", "./"]
+RUN npm install
+COPY --chown=node:node ["src/", "./src/"]
+RUN npm run build
 
-RUN mkdir -p /usr/src/quant-ux-ws
 
-WORKDIR /usr/src/quant-ux-ws
 
-RUN rm /bin/sh && ln -s /bin/bash /bin/sh
+FROM node:16-alpine AS deps
 
-ENV TZ=America/Chicago
+USER node
+WORKDIR /home/node
 
-ENV QUX_SERVER=http://qux-be.quantux.com:8080
+COPY --chown=node:node ["package.json", "package-lock.json", "./"]
+RUN npm install --omit=dev
 
-RUN git clone https://github.com/KlausSchaefers/quant-ux-websocket.git
 
-RUN cd quant-ux-websocket && npm install && npm run build
 
-RUN cd
+FROM node:16-alpine AS runner
 
-# Expose the Web Port
-EXPOSE 8086
+USER node
+WORKDIR /home/node
 
-## Start the server running
-CMD [ "node", "quant-ux-ws/build/build/src/qux-websocket-server.js" ]docker
+COPY --chown=node:node --from=deps ["/home/node/node_modules", "node_modules/"]
+COPY --chown=node:node ["config.json", "./"]
+COPY --chown=node:node --from=builder ["/home/node/build", "build/"]
+
+CMD [ "node", "build/src/qux-websocket-server.js" ]
